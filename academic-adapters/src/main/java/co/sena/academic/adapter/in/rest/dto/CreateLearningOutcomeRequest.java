@@ -1,0 +1,1 @@
+package co.sena.academic.adapter.in.rest.dto; import com.fasterxml.jackson.annotation.JsonProperty; import jakarta.validation.constraints.*; public record CreateLearningOutcomeRequest(@NotBlank @Size(max=20) String code,@NotBlank String description,@JsonProperty("is_active") Boolean isActive){}

@@ -1,0 +1,1 @@
+package co.sena.academic.adapter.in.rest.dto; import com.fasterxml.jackson.annotation.JsonProperty; import jakarta.validation.constraints.*; public record UpdateLearningOutcomeRequest(@Size(max=20) String code,String description,@JsonProperty("is_active") Boolean isActive,@JsonProperty("row_version") @NotNull @Min(0) Integer rowVersion){}
