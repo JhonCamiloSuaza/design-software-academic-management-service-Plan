@@ -1,0 +1,22 @@
+Fecha: 2026-10-16
+Responsable: Jhon Camilo Suaza Sánchez
+
+Servicio académico (mvn -B test)
+- academic-core: 40 pruebas, 0 fallos, 0 errores
+- academic-adapters: 11 pruebas, 0 fallos, 0 errores
+- academic-management-api: 1 prueba de contexto omitida porque Maven se ejecutó dentro de un contenedor sin /var/run/docker.sock
+- Reactor: BUILD SUCCESS
+
+Microfrontend académico
+- Test Files: 14 passed
+- Tests: 85 passed
+- TypeScript + Vite production build: correcto, 146 módulos transformados
+
+Reference data service (go test ./...)
+- Paquetes con pruebas: health, hierarchy, security, messaging, application/hierarchy y observability
+- Resultado: todos correctos
+
+Infraestructura
+- docker compose --profile academic config --quiet: correcto
+- academic-api /actuator/health: HTTP 200, status UP
+- reference-data-api /health: HTTP 200, status ok

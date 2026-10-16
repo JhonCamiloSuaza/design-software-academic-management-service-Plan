@@ -57,8 +57,14 @@ academic:
     exchange: ${ACADEMIC_EVENTS_EXCHANGE:academic-events}
     dlq: ${ACADEMIC_EVENTS_DLQ:academic-events.dlq}
     outbox:
+      enabled: ${ACADEMIC_OUTBOX_ENABLED:true}
       batch-size: ${ACADEMIC_OUTBOX_BATCH_SIZE:50}
       relay-delay-ms: ${ACADEMIC_OUTBOX_RELAY_DELAY_MS:1000}
+    consumer:
+      enabled: ${ACADEMIC_EVENTS_CONSUMER_ENABLED:true}
+      queue: ${ACADEMIC_EVENTS_CONSUMER_QUEUE:academic-events.r1.consumer}
+      dlq: ${ACADEMIC_EVENTS_CONSUMER_DLQ:academic-events.r1.dlq}
+      dlq-routing-key: ${ACADEMIC_EVENTS_CONSUMER_DLQ_ROUTING_KEY:academic-events.r1.dlq}
 
 reference-data:
   base-url: ${REFERENCE_DATA_BASE_URL:http://localhost:8002/api/v1}
