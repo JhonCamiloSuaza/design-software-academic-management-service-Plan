@@ -1,0 +1,31 @@
+Fecha: 2026-10-16
+Entorno aislado: Docker Compose project jhon-academic-clean
+
+Prueba de caída del broker
+- Event ID: 6bb4a96a-2618-43d9-8a14-f25c27ec3bf3
+- RabbitMQ detenido de forma controlada (la automatización usa docker pause).
+- Durante la caída: published=false, dead_lettered=false.
+- RabbitMQ reanudado y disponible.
+- Después de recuperar: published=true, dead_lettered=false.
+- processed_event para el event_id: 1.
+- Resultado: el evento no se perdió y produjo un efecto.
+
+Prueba de idempotencia
+- Event ID: 9cdffc19-cf71-44db-ad21-15e43cc621f3
+- Publicaciones al exchange con el mismo message_id: 2.
+- Filas en processed_event: 1.
+- Resultado: no hubo efecto duplicado.
+
+Prueba de DLQ
+- Se publicó un mensaje con message_id inválido.
+- El listener agotó sus reintentos con backoff.
+- academic-events.r1.dlq: messages=1, messages_ready=1.
+- El registro confirmó IllegalArgumentException al convertir el UUID después del interceptor de reintentos.
+
+Automatización reproducible
+- Ejecutar scripts/verify-r1-chaos.ps1 con el stack academic iniciado.
+- Ejecución final: R1_CHAOS_RESULT=PASS.
+- Event ID automatizado: 6787a3bf-8852-43ea-a818-4ba4a118e3fd.
+- Durante la pausa: retry_count=1, published=false.
+- Tras reanudar: published=true, dead_lettered=false, processed_effects=1.
+- Duplicado automatizado: 487fafcc-2409-4d04-9149-91f6443e82c4, duplicate_effects=1.
