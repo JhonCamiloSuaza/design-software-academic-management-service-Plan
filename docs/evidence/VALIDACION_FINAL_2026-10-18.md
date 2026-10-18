@@ -54,3 +54,11 @@ académico real.
 
 ![Web Shell E2E: 3 pruebas aprobadas](capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
 
+
+## 5. Evidencia visual de RabbitMQ
+
+La consola de administración de RabbitMQ muestra la cola
+`academic-events.r1.dlq` en ejecución, con `Ready=0`, `Unacked=0` y `Total=0`
+después del reproceso. También se observa la cola del consumidor R1.
+
+![RabbitMQ: DLQ R1 vacía](capturas-finales/07-rabbitmq-dlq-vacia.png)

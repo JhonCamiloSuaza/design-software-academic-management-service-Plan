@@ -55,10 +55,10 @@ Las salidas y capturas de la ejecución final están en
 - [MFE: 84 pruebas aprobadas](evidence/capturas-finales/04-mfe-84-pruebas-aprobadas.png)
 - [Web Shell: 112 pruebas aprobadas](evidence/capturas-finales/05-web-shell-112-pruebas-aprobadas.png)
 - [Web Shell E2E: 3 pruebas aprobadas](evidence/capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
+- [RabbitMQ: DLQ R1 vacía](evidence/capturas-finales/07-rabbitmq-dlq-vacia.png)
 
 ## Conclusión
 
 El reto R1 quedó validado de punta a punta en el entorno local personal. No se
 realizaron commits, pushes, PR ni cambios en repositorios de la organización
 `code-sena`.
-
