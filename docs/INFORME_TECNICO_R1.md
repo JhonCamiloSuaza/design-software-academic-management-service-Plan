@@ -1,58 +1,64 @@
-# Informe técnico breve — R1 resiliencia y mensajería
+﻿# Informe técnico breve — R1 resiliencia y mensajería
 
-**Aprendiz:** Jhon Camilo Suaza Sanchez  
-**Dominio:** `academic-management`  
+**Aprendiz:** Jhon Camilo Suaza Sanchez
+**Dominio:** `academic-management`
 **Reto:** R1 — resiliencia/mensajería
+**Fecha de validación final:** 18 de octubre de 2026
+
+## Alcance
+
+Se dejó operativo el recorrido local del dominio académico: PostgreSQL, RabbitMQ,
+Liquibase, API `academic-management`, MFE académico y Web Shell. Las pruebas se
+ejecutaron desde las ramas `develop` personales después de fusionar los PR del reto.
 
 ## Implementación
 
-| Criterio | Evidencia en el código |
+| Criterio | Implementación |
 | --- | --- |
 | Outbox transaccional | `AcademicOutboxWriter`, `AcademicOutboxJpaEntity` y tabla `academic_management.outbox`. |
-| Confirmación del broker | `AcademicOutboxRelay` espera `CorrelationData.Confirm` antes de actualizar `published_at`. |
-| Backoff | Publicación y consumo usan 1 s, 4 s y 16 s. |
-| Consumidor idempotente | `ProcessedEventJpaRepository.insertIfAbsent` usa la clave única `(consumer_name, event_id)`. |
-| DLQ | `academic-events.dlq` para relay y `academic-events.r1.dlq` para el consumidor. |
-| Reproceso | `POST /api/v1/events/dlq/reprocess-next`. |
-| Caída de broker | La prueba `AcademicOutboxRelayTest.postponesTheEventWhenTheBrokerIsUnavailable` verifica que el evento sigue pendiente y aumenta el contador de reintentos. |
+| Confirmación del broker | `AcademicOutboxRelay` espera la confirmación de RabbitMQ antes de registrar `published_at`. |
+| Reintentos con backoff | Reintentos de 1 s, 4 s y 16 s para la mensajería R1. |
+| Consumidor idempotente | `processed_event` tiene unicidad por `(consumer_name, event_id)`. |
+| DLQ y reproceso | Cola `academic-events.r1.dlq` y endpoint `POST /api/v1/events/dlq/reprocess-next`. |
+| Recuperación del broker | El evento permanece en outbox durante la caída y se publica al recuperar RabbitMQ. |
 
-## Validación automatizada
+La decisión de arquitectura está documentada en
+[ADR-001 — R1 resiliencia y mensajería](adr/ADR-001-r1-resiliencia-mensajeria.md).
 
-Ejecutado localmente:
+## Validación final
 
-```powershell
-mvn -s "..\maven-local-settings.xml" -q -pl academic-adapters -am test
-```
+| Prueba | Resultado observado |
+| --- | --- |
+| Salud de API | `GET /actuator/health` respondió `UP`. |
+| Esquema | Existen las tablas `outbox` y `processed_event` en `academic_management`. |
+| Idempotencia | Dos publicaciones del mismo evento dejaron una sola recepción: `total = 1`. |
+| DLQ | Un fallo controlado terminó con `academic-events.r1.dlq | messages=1 | ready=1`. |
+| Reproceso | Después del reproceso autorizado, la DLQ terminó en `messages=0 | ready=0`. |
+| Caída de RabbitMQ | Durante la caída: `retry_count=1`, `published=false`; al recuperarlo: `retry_count=3`, `published=true`. |
+| Backend | `mvn -s "..\\maven-local-settings.xml" -q -pl academic-adapters -am test` finalizó correctamente. |
+| MFE académico | `npm.cmd test`: 84 pruebas aprobadas. |
+| Web Shell | `npm.cmd test`: 112 pruebas aprobadas. |
+| Integración de navegador | `npm.cmd run test:e2e`: 3 pruebas Playwright aprobadas. |
 
-Resultado: pruebas unitarias aprobadas. La advertencia de Mockito sobre
-auto-adjuntar el agente no representa un fallo de pruebas.
+Para ejecutar los scripts de evidencia en este equipo se usó
+`powershell -ExecutionPolicy Bypass -File ...`. Es un permiso temporal del
+proceso de PowerShell; no cambia la política permanente del equipo ni el código.
 
-La prueba `AcademicOutboxRelayTest.postponesTheEventWhenTheBrokerIsUnavailable`
-simula RabbitMQ no disponible y comprueba que `published_at` continúa nulo, que
-`retry_count` aumenta a 1 y que se programa `next_attempt_at`.
+## Evidencias
 
-## Validación de integración ejecutada
+Las salidas y capturas de la ejecución final están en
+[VALIDACION_FINAL_2026-10-18.md](evidence/VALIDACION_FINAL_2026-10-18.md).
 
-1. El entorno local levantó PostgreSQL, RabbitMQ y `academic-api`. La consulta
-   `GET http://localhost:8003/actuator/health` respondió `UP`.
-2. `scripts/verify-r1.ps1 -ProjectName jhon-academic` se ejecutó correctamente:
-   una entrega duplicada produjo una sola fila en `processed_event`; un fallo
-   forzado alcanzó `academic-events.r1.dlq` con `messages=1`; el endpoint de
-   reproceso devolvió el mensaje a la ruta primaria y la DLQ terminó en
-   `messages=0`.
-3. `scripts/verify-broker-outage.ps1 -ProjectName jhon-academic` realiza la
-   demostración controlada de caída real del broker: inserta un evento de
-   práctica, detiene RabbitMQ, comprueba `retry_count >= 1` y
-   `published_at = false`, lo inicia de nuevo y confirma `published_at = true`.
+- [Esquema outbox y processed_event](evidence/capturas-finales/01-esquema-outbox-processed-event.png)
+- [Idempotencia, DLQ y reproceso](evidence/capturas-finales/02-r1-idempotencia-dlq-reproceso.png)
+- [Caída y recuperación de RabbitMQ](evidence/capturas-finales/03-r1-caida-recuperacion-rabbitmq.png)
+- [MFE: 84 pruebas aprobadas](evidence/capturas-finales/04-mfe-84-pruebas-aprobadas.png)
+- [Web Shell: 112 pruebas aprobadas](evidence/capturas-finales/05-web-shell-112-pruebas-aprobadas.png)
+- [Web Shell E2E: 3 pruebas aprobadas](evidence/capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
 
-## Capturas para la sustentación
+## Conclusión
 
-Durante la ejecución final captura: estado `UP`; resultado `count = 1` del
-evento duplicado; cola `academic-events.r1.dlq` primero con `messages=1` y
-después con `messages=0`; y las dos líneas `outbox while broker is down` y
-`outbox after broker recovery`. Esas capturas corresponden a salidas reales del
-entorno local del aprendiz.
-
-La salida consolidada y la captura del Shell con el MFE académico se encuentran
-en [docs/evidence/VALIDACION_LOCAL_2026-10-18.md](evidence/VALIDACION_LOCAL_2026-10-18.md).
+El reto R1 quedó validado de punta a punta en el entorno local personal. No se
+realizaron commits, pushes, PR ni cambios en repositorios de la organización
+`code-sena`.
 
