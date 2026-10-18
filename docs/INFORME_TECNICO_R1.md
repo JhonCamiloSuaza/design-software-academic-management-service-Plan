@@ -53,3 +53,6 @@ después con `messages=0`; y las dos líneas `outbox while broker is down` y
 `outbox after broker recovery`. Esas capturas corresponden a salidas reales del
 entorno local del aprendiz.
 
+La salida consolidada y la captura del Shell con el MFE académico se encuentran
+en [docs/evidence/VALIDACION_LOCAL_2026-10-18.md](evidence/VALIDACION_LOCAL_2026-10-18.md).
+
