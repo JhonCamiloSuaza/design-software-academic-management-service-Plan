@@ -12,6 +12,10 @@
 | PostgreSQL | Contenedor saludable y esquema `academic_management` migrado. |
 | RabbitMQ | Contenedor saludable; DLQ R1 final en `messages=0`, `ready=0`, `unacknowledged=0`. |
 
+La consulta funcional `GET /api/v1/fichas?page=1&page_size=10`, con el token
+de práctica local, respondió **HTTP 200** y devolvió una ficha de prueba
+(`2874521`). Esto confirma el recorrido API y PostgreSQL que consume el MFE.
+
 ## Entrega duplicada e idempotencia
 
 `verify-r1.ps1` publicó dos veces el mismo `message_id`. La consulta a
