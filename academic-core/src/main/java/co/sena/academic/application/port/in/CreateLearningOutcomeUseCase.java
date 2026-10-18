@@ -1,0 +1,1 @@
+package co.sena.academic.application.port.in; import co.sena.academic.domain.model.LearningOutcome; import java.util.UUID; public interface CreateLearningOutcomeUseCase { LearningOutcome create(Command command); record Command(UUID competencyId,String code,String description,Boolean isActive,UUID actorId){} }

@@ -1,0 +1,1 @@
+package co.sena.academic.domain.exception; import java.util.UUID; public class LearningOutcomeCodeAlreadyExistsException extends RuntimeException { public LearningOutcomeCodeAlreadyExistsException(UUID competencyId,String code){super("Learning outcome code already exists in competency "+competencyId+": "+code);} }

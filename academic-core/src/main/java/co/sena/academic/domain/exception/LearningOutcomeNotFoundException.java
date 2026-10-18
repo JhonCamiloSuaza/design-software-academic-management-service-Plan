@@ -1,0 +1,1 @@
+package co.sena.academic.domain.exception; import java.util.UUID; public class LearningOutcomeNotFoundException extends RuntimeException { public LearningOutcomeNotFoundException(UUID id){super("Learning outcome not found: "+id);} }

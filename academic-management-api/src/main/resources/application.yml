@@ -1,0 +1,73 @@
+# Adjust to match your real configuration (profiles, Vault, etc).
+# Only the minimum relevant to HU-ACAD-01 is kept here.
+spring:
+  application:
+    name: academic-management-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:15432/design-software-develop?currentSchema=academic_management}
+    username: ${DB_USER:design_software_app}
+    password: ${DB_PASSWORD:change-me-app}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  liquibase:
+    enabled: false
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+      retry:
+        enabled: true
+        initial-interval: 1s
+        multiplier: 4
+        max-interval: 16s
+        max-attempts: 4
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${IAM_JWKS_URI:http://localhost:8001/auth/.well-known/jwks.json}
+
+server:
+  port: 8003
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  tracing:
+    sampling:
+      probability: ${OTEL_TRACES_SAMPLING:1.0}
+  observations:
+    annotations:
+      enabled: true
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4318}/v1/traces
+
+academic:
+  events:
+    exchange: ${ACADEMIC_EVENTS_EXCHANGE:academic-events}
+    dlq: ${ACADEMIC_EVENTS_DLQ:academic-events.dlq}
+    outbox:
+      batch-size: ${ACADEMIC_OUTBOX_BATCH_SIZE:50}
+      relay-delay-ms: ${ACADEMIC_OUTBOX_RELAY_DELAY_MS:1000}
+
+reference-data:
+  base-url: ${REFERENCE_DATA_BASE_URL:http://localhost:8002/api/v1}
+
+actors-service:
+  base-url: ${ACTORS_SERVICE_BASE_URL:http://localhost:8004/api/v1}
+
+iam:
+  base-url: ${IAM_API_BASE_URL:http://localhost:8080/api/v1}
+  m2m:
+    academic-client-id: ${IAM_M2M_ACADEMIC_CLIENT_ID:academic-management-service}
+    academic-client-secret: ${IAM_M2M_ACADEMIC_CLIENT_SECRET:}

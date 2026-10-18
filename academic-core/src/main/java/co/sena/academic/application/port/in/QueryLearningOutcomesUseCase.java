@@ -1,0 +1,1 @@
+package co.sena.academic.application.port.in; import co.sena.academic.domain.model.LearningOutcome; import java.util.*; public interface QueryLearningOutcomesUseCase { Page list(Query query); record Query(UUID competencyId,Optional<Boolean> isActive,int page,int size,Optional<String> sort){} record Page(List<LearningOutcome> content,long totalElements,int page,int size){} }

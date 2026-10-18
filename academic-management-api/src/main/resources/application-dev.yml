@@ -1,0 +1,11 @@
+academic:
+  security:
+    dev-jwt-decoder: true
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri:
+          jwk-set-uri:
