@@ -5,7 +5,6 @@ import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
-@ConditionalOnBean(RabbitTemplate.class)
 public class AcademicOutboxRelay {
 
     private static final List<Duration> BACKOFF = List.of(

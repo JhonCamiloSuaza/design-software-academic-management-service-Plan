@@ -20,10 +20,13 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
     publisher-confirm-type: correlated
     publisher-returns: true
+    connection-timeout: 2s
     template:
       mandatory: true
       retry:
-        enabled: true
+        # The outbox relay owns the durable retry schedule.  Avoid hidden
+        # client retries that would block the relay while the broker is down.
+        enabled: false
         initial-interval: 1s
         multiplier: 4
         max-interval: 16s

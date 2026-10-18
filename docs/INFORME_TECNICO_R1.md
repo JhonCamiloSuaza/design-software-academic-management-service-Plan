@@ -27,14 +27,29 @@ mvn -s "..\maven-local-settings.xml" -q -pl academic-adapters -am test
 Resultado: pruebas unitarias aprobadas. La advertencia de Mockito sobre
 auto-adjuntar el agente no representa un fallo de pruebas.
 
-## Validación de integración que se debe capturar
+La prueba `AcademicOutboxRelayTest.postponesTheEventWhenTheBrokerIsUnavailable`
+simula RabbitMQ no disponible y comprueba que `published_at` continúa nulo, que
+`retry_count` aumenta a 1 y que se programa `next_attempt_at`.
 
-1. Levantar el entorno con `docker-infra/scripts/up-academic-stack.ps1`.
-2. Ejecutar `scripts/verify-r1.ps1` en este repositorio.
-3. Capturar: estado saludable, una fila de `processed_event`, `count = 1` para
-   el evento duplicado, una cola DLQ con mensaje y su valor `0` después del
-   reproceso.
+## Validación de integración ejecutada
 
-Las salidas de ese procedimiento se adjuntarán como evidencia final, porque se
-generan sobre el entorno local del aprendiz y no deben inventarse en este
-informe.
+1. El entorno local levantó PostgreSQL, RabbitMQ y `academic-api`. La consulta
+   `GET http://localhost:8003/actuator/health` respondió `UP`.
+2. `scripts/verify-r1.ps1 -ProjectName jhon-academic` se ejecutó correctamente:
+   una entrega duplicada produjo una sola fila en `processed_event`; un fallo
+   forzado alcanzó `academic-events.r1.dlq` con `messages=1`; el endpoint de
+   reproceso devolvió el mensaje a la ruta primaria y la DLQ terminó en
+   `messages=0`.
+3. `scripts/verify-broker-outage.ps1 -ProjectName jhon-academic` realiza la
+   demostración controlada de caída real del broker: inserta un evento de
+   práctica, detiene RabbitMQ, comprueba `retry_count >= 1` y
+   `published_at = false`, lo inicia de nuevo y confirma `published_at = true`.
+
+## Capturas para la sustentación
+
+Durante la ejecución final captura: estado `UP`; resultado `count = 1` del
+evento duplicado; cola `academic-events.r1.dlq` primero con `messages=1` y
+después con `messages=0`; y las dos líneas `outbox while broker is down` y
+`outbox after broker recovery`. Esas capturas corresponden a salidas reales del
+entorno local del aprendiz.
+
