@@ -56,6 +56,11 @@ academic:
   events:
     exchange: ${ACADEMIC_EVENTS_EXCHANGE:academic-events}
     dlq: ${ACADEMIC_EVENTS_DLQ:academic-events.dlq}
+    consumer:
+      enabled: ${ACADEMIC_R1_CONSUMER_ENABLED:true}
+      queue: ${ACADEMIC_R1_CONSUMER_QUEUE:academic-events.r1.consumer}
+      dlq: ${ACADEMIC_R1_CONSUMER_DLQ:academic-events.r1.dlq}
+      routing-key: ${ACADEMIC_R1_CONSUMER_ROUTING_KEY:academic.r1.#}
     outbox:
       batch-size: ${ACADEMIC_OUTBOX_BATCH_SIZE:50}
       relay-delay-ms: ${ACADEMIC_OUTBOX_RELAY_DELAY_MS:1000}

@@ -3,6 +3,7 @@ package co.sena.academic.adapter.out.event;
 import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +15,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @ConditionalOnBean(RabbitTemplate.class)
@@ -40,23 +42,36 @@ public class AcademicOutboxRelay {
         Instant now = Instant.now();
         for (AcademicOutboxJpaEntity event : repository.findPublishable(now, PageRequest.of(0, batchSize))) {
             try {
-                rabbitTemplate.send(
-                        event.getTopic(),
-                        event.getRoutingKey(),
-                        messageFor(event, null));
+                sendWithBrokerConfirmation(
+                        event.getTopic(), event.getRoutingKey(), messageFor(event, null), event.getEventId());
                 event.markPublished(Instant.now());
             } catch (RuntimeException ex) {
                 if (event.getRetryCount() >= BACKOFF.size()) {
                     event.markDeadLettered(Instant.now(), ex.getMessage());
-                    rabbitTemplate.send(
-                            event.getTopic(),
-                            "academic-events.dlq",
-                            messageFor(event, ex.getMessage()));
+                    sendWithBrokerConfirmation(
+                            event.getTopic(), "academic-events.dlq", messageFor(event, ex.getMessage()), event.getEventId());
                 } else {
                     Duration delay = BACKOFF.get(event.getRetryCount());
                     event.markRetry(Instant.now().plus(delay), ex.getMessage());
                 }
             }
+        }
+    }
+
+    private void sendWithBrokerConfirmation(String exchange, String routingKey, Message message, java.util.UUID eventId) {
+        CorrelationData correlation = new CorrelationData(eventId.toString());
+        rabbitTemplate.send(exchange, routingKey, message, correlation);
+        try {
+            CorrelationData.Confirm confirm = correlation.getFuture().get(5, TimeUnit.SECONDS);
+            if (confirm == null || !confirm.isAck()) {
+                String reason = confirm == null ? "broker confirmation timed out" : confirm.getReason();
+                throw new IllegalStateException("RabbitMQ did not confirm event " + eventId + ": " + reason);
+            }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while waiting for RabbitMQ confirmation", ex);
+        } catch (Exception ex) {
+            throw new IllegalStateException("RabbitMQ confirmation failed for event " + eventId, ex);
         }
     }
 
