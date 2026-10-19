@@ -37,7 +37,7 @@ La decisión de arquitectura está documentada en
 | Caída de RabbitMQ | Durante la caída: `retry_count=1`, `published=false`; al recuperarlo: `retry_count=3`, `published=true`. |
 | Caos con reinicio de API | Con RabbitMQ detenido, el evento `9baa5104-2b4c-4fb6-bc97-d913c58723ef` permaneció pendiente (`1|f|f`). La API se reinició antes de recuperar el broker. Después, el evento quedó publicado (`2|t|f`) y `processed_event=1`; una segunda entrega mantuvo el total en 1. Fue un evento de práctica insertado directamente en outbox. |
 | Creación de ficha y outbox | `POST /api/v1/fichas` respondió `201` para `R1-361bac39`; PostgreSQL confirmó la ficha y su evento `academic.ficha.opened` con el mismo `ficha_id`; `GET` respondió `200` y el Shell mostró su detalle. La dependencia de centros y el token fueron de práctica. |
-| Flujo sin mocks de referencia e IAM | Migraciones reales: 18 changesets de reference-data y 37 de IAM. IAM emitió un JWT real; reference-data devolvió el centro activo `9201`; la API, sin perfil `dev`, creó `R1-REAL-47e446e6` y PostgreSQL confirmó su evento outbox. El MFE inició en Docker y su `remoteEntry.js` devolvió HTTP 200. |
+| Flujo sin mocks de referencia e IAM | Migraciones reales: 18 changesets de reference-data y 37 de IAM. IAM emitió un JWT real; reference-data devolvió el centro activo `9201`; la API, sin perfil `dev`, creó `R1-REAL-47e446e6` y PostgreSQL confirmó su evento outbox. El MFE inició en Docker y su `remoteEntry.js` devolvió HTTP 200. El Shell usó sesión HTTP real: login, `/auth/me` y `/fichas` respondieron 200; la pantalla mostró `R1 Academic Demo / SYSTEM_ADMIN` y tres fichas. |
 | Backend | `mvn -s "..\\maven-local-settings.xml" -q -pl academic-adapters -am test` finalizó correctamente. |
 | MFE académico | `npm.cmd test`: 84 pruebas aprobadas. |
 | Web Shell | `npm.cmd test`: 112 pruebas aprobadas. |
@@ -60,6 +60,7 @@ Las salidas y capturas de la ejecución final están en
 - [Web Shell E2E: 3 pruebas aprobadas](evidence/capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
 - [RabbitMQ: DLQ R1 vacía](evidence/capturas-finales/07-rabbitmq-dlq-vacia.png)
 - [Ficha creada por API y visible en el Shell](evidence/capturas-finales/08-ficha-creada-outbox-negocio.png)
+- [Shell con sesión IAM y fichas reales](evidence/capturas-finales/09-flujo-real-iam-shell.png)
 - [Salida de caos con reinicio de API y duplicado](evidence/VALIDACION_FINAL_2026-10-18.md#7-caos-con-reinicio-de-la-api-y-entrega-duplicada)
 - [Flujo académico con dependencias reales](evidence/VALIDACION_FINAL_2026-10-18.md#8-flujo-académico-con-dependencias-reales)
 
@@ -68,6 +69,6 @@ Las salidas y capturas de la ejecución final están en
 Se validó el recorrido local presentado para R1, incluida la escritura de una
 ficha mediante la API y su evento en outbox. El recorrido posterior sustituyó
 el centro temporal y el token de práctica por los servicios locales reales de
-reference-data e IAM. No se realizó una prueba de rollback de negocio ni se
-documentó todavía una sesión visual real del Web Shell. No se realizaron
+reference-data e IAM. También se documentó el MFE dentro del Web Shell con la
+identidad real de IAM. No se realizó una prueba forzada de rollback de negocio. No se realizaron
 cambios en repositorios de la organización `code-sena`.
