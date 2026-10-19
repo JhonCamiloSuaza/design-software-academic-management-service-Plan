@@ -62,3 +62,38 @@ La consola de administración de RabbitMQ muestra la cola
 después del reproceso. También se observa la cola del consumidor R1.
 
 ![RabbitMQ: DLQ R1 vacía](capturas-finales/07-rabbitmq-dlq-vacia.png)
+
+## 6. Operación de negocio real y outbox
+
+Se ejecutó una prueba adicional de creación de ficha mediante la API académica,
+con el guion reproducible [`verify-business-outbox.ps1`](../../scripts/verify-business-outbox.ps1):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\scripts\verify-business-outbox.ps1" -ProjectName jhon-academic
+```
+
+El guion envió `POST /api/v1/fichas` con programa y centro de práctica, fecha
+futura, jornada diurna, modalidad presencial y cupo 30. La API respondió `201`:
+
+```text
+HTTP 201 | ficha_number=R1-361bac39 | ficha_id=ceb35e9d-2242-4176-a5cd-3a36988d5d51
+enrollment_ficha: ceb35e9d-2242-4176-a5cd-3a36988d5d51|R1-361bac39
+outbox: 4412e478-cbe1-4873-8039-6c19a8954be2|academic.ficha.opened|t|t
+```
+
+En la última fila, el primer `t` confirma que el contenido del evento referencia
+el mismo ID de ficha; el segundo indica que el relay ya lo había publicado. Una
+consulta SQL independiente volvió a unir la ficha y el evento por ese ID. El
+`GET /api/v1/fichas/ceb35e9d-2242-4176-a5cd-3a36988d5d51` respondió `200`.
+Al actualizar el Web Shell, la nueva ficha apareció en una lista de dos registros
+y se abrió su detalle:
+
+![Ficha R1 creada mediante la API y visible en el Shell](capturas-finales/08-ficha-creada-outbox-negocio.png)
+
+El guion usa la API académica, PostgreSQL y RabbitMQ reales del entorno local.
+Como el servicio de centros de formación no estaba levantado, inicia durante el
+`POST` una respuesta temporal para el centro de práctica y la detiene al final;
+la autenticación también usa el perfil local `dev`. La prueba confirma el camino
+exitoso de ficha y outbox, pero no fuerza un rollback ni valida IAM o referencia
+de centros reales. La prueba de caída del broker de la sección 3 cubre por
+separado la conservación y publicación posterior de un evento pendiente.
