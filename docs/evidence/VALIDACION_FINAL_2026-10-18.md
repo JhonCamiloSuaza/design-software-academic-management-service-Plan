@@ -97,3 +97,33 @@ la autenticación también usa el perfil local `dev`. La prueba confirma el cami
 exitoso de ficha y outbox, pero no fuerza un rollback ni valida IAM o referencia
 de centros reales. La prueba de caída del broker de la sección 3 cubre por
 separado la conservación y publicación posterior de un evento pendiente.
+
+## 7. Caos con reinicio de la API y entrega duplicada
+
+El guion reproducible [`verify-r1-chaos-restart.ps1`](../../scripts/verify-r1-chaos-restart.ps1)
+se ejecutó desde la raíz del repositorio personal del servicio:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\scripts\verify-r1-chaos-restart.ps1" -ProjectName jhon-academic
+```
+
+Detuvo RabbitMQ, insertó un evento de práctica en outbox y confirmó que seguía
+pendiente. Después reinició la API **mientras RabbitMQ continuaba detenido**,
+recuperó el broker y comprobó la publicación y una recepción. Finalmente
+entregó otra vez el mismo `event_id` y verificó que `processed_event` no aumentó:
+
+```text
+Broker detenido | outbox: 9baa5104-2b4c-4fb6-bc97-d913c58723ef|1|f|f
+API reiniciada | antes=2026-10-19T00:15:17.924578589Z | despues=2026-10-19T02:34:46.460923641Z
+Broker recuperado | outbox: 9baa5104-2b4c-4fb6-bc97-d913c58723ef|2|t|f | processed_event=1
+Duplicado entregado | processed_event antes=1 | despues=1
+CAOS R1 APROBADO | event_id=9baa5104-2b4c-4fb6-bc97-d913c58723ef | publicado=t | procesado=1 | duplicado=1
+```
+
+Una consulta SQL independiente devolvió
+`9baa5104-2b4c-4fb6-bc97-d913c58723ef|2|t|f|1` para identificador, número
+de reintentos, publicación, envío a DLQ y total de recepciones. Los tiempos
+`StartedAt` de Docker están en UTC. El guion intenta recuperar RabbitMQ incluso
+si la ejecución falla. Esta prueba valida la recuperación y deduplicación de un
+evento de mensajería de práctica insertado directamente en outbox; la operación
+de negocio por API se documenta en la sección 6 y se probó por separado.

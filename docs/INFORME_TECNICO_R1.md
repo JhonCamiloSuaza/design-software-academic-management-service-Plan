@@ -35,6 +35,7 @@ La decisión de arquitectura está documentada en
 | DLQ | Un fallo controlado terminó con `academic-events.r1.dlq | messages=1 | ready=1`. |
 | Reproceso | Después del reproceso autorizado, la DLQ terminó en `messages=0 | ready=0`. |
 | Caída de RabbitMQ | Durante la caída: `retry_count=1`, `published=false`; al recuperarlo: `retry_count=3`, `published=true`. |
+| Caos con reinicio de API | Con RabbitMQ detenido, el evento `9baa5104-2b4c-4fb6-bc97-d913c58723ef` permaneció pendiente (`1|f|f`). La API se reinició antes de recuperar el broker. Después, el evento quedó publicado (`2|t|f`) y `processed_event=1`; una segunda entrega mantuvo el total en 1. Fue un evento de práctica insertado directamente en outbox. |
 | Creación de ficha y outbox | `POST /api/v1/fichas` respondió `201` para `R1-361bac39`; PostgreSQL confirmó la ficha y su evento `academic.ficha.opened` con el mismo `ficha_id`; `GET` respondió `200` y el Shell mostró su detalle. La dependencia de centros y el token fueron de práctica. |
 | Backend | `mvn -s "..\\maven-local-settings.xml" -q -pl academic-adapters -am test` finalizó correctamente. |
 | MFE académico | `npm.cmd test`: 84 pruebas aprobadas. |
@@ -58,6 +59,7 @@ Las salidas y capturas de la ejecución final están en
 - [Web Shell E2E: 3 pruebas aprobadas](evidence/capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
 - [RabbitMQ: DLQ R1 vacía](evidence/capturas-finales/07-rabbitmq-dlq-vacia.png)
 - [Ficha creada por API y visible en el Shell](evidence/capturas-finales/08-ficha-creada-outbox-negocio.png)
+- [Salida de caos con reinicio de API y duplicado](evidence/VALIDACION_FINAL_2026-10-18.md#7-caos-con-reinicio-de-la-api-y-entrega-duplicada)
 
 ## Conclusión
 
