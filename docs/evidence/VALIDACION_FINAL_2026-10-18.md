@@ -127,3 +127,36 @@ de reintentos, publicación, envío a DLQ y total de recepciones. Los tiempos
 si la ejecución falla. Esta prueba valida la recuperación y deduplicación de un
 evento de mensajería de práctica insertado directamente en outbox; la operación
 de negocio por API se documenta en la sección 6 y se probó por separado.
+
+## 8. Flujo académico con dependencias reales
+
+El 19 de octubre se aplicaron las migraciones reales de reference-data (18
+changesets) e IAM (37 changesets) al PostgreSQL local. IAM inició en
+`localhost:8001`, su health y JWKS respondieron `200`, y emitió un JWT para la
+cuenta local `r1-academic-demo@example.test` con rol `SYSTEM_ADMIN`.
+
+El servicio real de datos de referencia inició en `localhost:8080`. Con ese
+JWT, devolvió el centro semilla activo `9201`:
+
+```text
+REFERENCE_CENTER_OK|a0000000-0000-0000-0000-000000000005|9201|active=True
+```
+
+La API académica se inició sin el perfil `dev`, con
+`IAM_JWKS_URI=http://iam-api:8080/api/v1/auth/.well-known/jwks.json` y
+`REFERENCE_DATA_BASE_URL=http://host.docker.internal:8080`. El MFE académico
+también se inició desde Docker y su `remoteEntry.js` respondió HTTP 200 en el
+puerto 5103.
+
+Con el JWT emitido por IAM se creó una ficha mediante `POST /api/v1/fichas`:
+
+```text
+ACADEMIC_HEALTH=UP
+FICHA_CREATED|11400358-ff3d-4250-9adb-a62be0010d26|R1-REAL-47e446e6
+11400358-ff3d-4250-9adb-a62be0010d26|R1-REAL-47e446e6|t
+```
+
+La última salida es una consulta independiente de PostgreSQL: confirma la
+ficha creada y que existe un evento `academic.ficha.opened` cuyo payload
+referencia el mismo identificador. No se inició el contenedor temporal de
+Python ni se usó `local-practice-token` en este recorrido.
