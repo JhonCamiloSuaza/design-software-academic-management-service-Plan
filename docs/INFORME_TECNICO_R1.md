@@ -35,6 +35,7 @@ La decisión de arquitectura está documentada en
 | DLQ | Un fallo controlado terminó con `academic-events.r1.dlq | messages=1 | ready=1`. |
 | Reproceso | Después del reproceso autorizado, la DLQ terminó en `messages=0 | ready=0`. |
 | Caída de RabbitMQ | Durante la caída: `retry_count=1`, `published=false`; al recuperarlo: `retry_count=3`, `published=true`. |
+| Creación de ficha y outbox | `POST /api/v1/fichas` respondió `201` para `R1-361bac39`; PostgreSQL confirmó la ficha y su evento `academic.ficha.opened` con el mismo `ficha_id`; `GET` respondió `200` y el Shell mostró su detalle. La dependencia de centros y el token fueron de práctica. |
 | Backend | `mvn -s "..\\maven-local-settings.xml" -q -pl academic-adapters -am test` finalizó correctamente. |
 | MFE académico | `npm.cmd test`: 84 pruebas aprobadas. |
 | Web Shell | `npm.cmd test`: 112 pruebas aprobadas. |
@@ -56,9 +57,12 @@ Las salidas y capturas de la ejecución final están en
 - [Web Shell: 112 pruebas aprobadas](evidence/capturas-finales/05-web-shell-112-pruebas-aprobadas.png)
 - [Web Shell E2E: 3 pruebas aprobadas](evidence/capturas-finales/06-web-shell-e2e-3-pruebas-aprobadas.png)
 - [RabbitMQ: DLQ R1 vacía](evidence/capturas-finales/07-rabbitmq-dlq-vacia.png)
+- [Ficha creada por API y visible en el Shell](evidence/capturas-finales/08-ficha-creada-outbox-negocio.png)
 
 ## Conclusión
 
-El reto R1 quedó validado de punta a punta en el entorno local personal. No se
-realizaron commits, pushes, PR ni cambios en repositorios de la organización
-`code-sena`.
+Se validó el recorrido local presentado para R1, incluida la escritura de una
+ficha mediante la API y su evento en outbox. La prueba adicional confirma el
+camino exitoso; no forzó un rollback ni sustituyó el servicio de centros o el IAM
+de práctica por sus implementaciones reales. No se realizaron cambios en
+repositorios de la organización `code-sena`.
