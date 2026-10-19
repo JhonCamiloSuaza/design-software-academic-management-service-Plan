@@ -160,3 +160,22 @@ La última salida es una consulta independiente de PostgreSQL: confirma la
 ficha creada y que existe un evento `academic.ficha.opened` cuyo payload
 referencia el mismo identificador. No se inició el contenedor temporal de
 Python ni se usó `local-practice-token` en este recorrido.
+
+El Shell se inició con `VITE_SESSION_SOURCE=http`, el MFE federado académico y
+el proxy local separado por servicio: `/api/v1/auth/*` hacia IAM en el puerto
+8001 y las demás rutas `/api/v1/*` hacia Academic API en el puerto 8003. La
+validación a través del mismo origen del Shell produjo:
+
+```text
+LOGIN_HTTP=200|TOKEN_PRESENT=True
+ME_HTTP=200|EMAIL=r1-academic-demo@example.test
+FICHAS_HTTP=200|TOTAL=3|FIRST=R1-REAL-47e446e6
+VISUAL_REAL_OK|usuario=R1 Academic Demo|fichas=3
+```
+
+La captura muestra la identidad devuelta por IAM (`R1 Academic Demo`, rol
+`SYSTEM_ADMIN`) y las tres fichas obtenidas por el MFE desde Academic API. En
+esta validación la fuente de notificaciones permaneció en `mock` porque no
+forma parte del flujo principal académico evaluado.
+
+![Shell con sesión IAM y fichas reales](capturas-finales/09-flujo-real-iam-shell.png)
